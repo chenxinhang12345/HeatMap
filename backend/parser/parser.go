@@ -103,7 +103,14 @@ func CreateNanoCubeFromCsvFile(filePath string, typeHead string, maxDepth int, l
 	}
 	res := nc.SetUpCube(maxDepth, nc.Bounds{Lng: minLng, Lat: maxLat, Width: b, Height: b}, typesArray)
 	for i := 0; i < limit; i++ {
+		// //d
+		// fmt.Println(i, "th", "add")
+		// //d
 		res.AddObject(objects[i])
+		// //debug
+		// boxes := nc.QueryAll(res.Root, 2)
+		// fmt.Println(boxes)
+		// //debug
 	}
 	fmt.Println("Total number of objects: ", limit)
 	return res

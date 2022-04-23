@@ -1,9 +1,5 @@
 package nanocube
 
-import (
-	"math"
-)
-
 /*
 Nanocube ...
 */
@@ -90,7 +86,7 @@ func AssignIndexOnBounds(obj Object, b Bounds) (int, Bounds) {
 	} else if obj.Lng > MidLng && obj.Lat < MidLat {
 		return 3, Bounds{MidLng, MidLat, HalfWidth, HalfHeight}
 	} else {
-		return 0, Bounds{}
+		return -1, Bounds{}
 	}
 }
 
@@ -167,15 +163,15 @@ func (s *SpatNode) UpdateSummary(obj Object, maxLevel int, nc *Nanocube) {
 				index := nc.getIndex(obj.Type) //update categorical node
 				cpy := make([]*Summary, len(s.CatRoot.Children))
 				copy(cpy, s.CatRoot.Children)
-				s.CatRoot = &CatNode{Summary: s.CatRoot.Summary.Copy(), Children: cpy} //update cat root
+				count := s.CatRoot.Summary.Count
+				// fmt.Println("original count", count)
+				s.CatRoot = &CatNode{Summary: &Summary{Count: count}, Children: cpy} //update cat root
 				if s.CatRoot.Children[index] == nil {
 					s.CatRoot.Children[index] = &Summary{Count: 1}
 				} else {
 					s.CatRoot.Children[index] = s.CatRoot.Children[index].Copy()
 				}
-
 				s.CatRoot.Summary.Count++
-
 				s.CatRoot.Children[index].Count++
 			}
 		}
@@ -187,7 +183,8 @@ func (s *SpatNode) UpdateSummary(obj Object, maxLevel int, nc *Nanocube) {
 		} else { //need update
 			index := nc.getIndex(obj.Type)
 			if s.CatRoot.Children[index] != nil {
-				s.CatRoot.Children[index].Count++
+				s.CatRoot.Children[index] = &Summary{Count: s.CatRoot.Children[index].Count + 1}
+				s.CatRoot.Summary.Count++
 			} else {
 				s.CatRoot.Children[index] = &Summary{Count: 1}
 				for i := 0; i < len(s.CatRoot.Children); i++ {
@@ -212,6 +209,7 @@ func (nc *Nanocube) AddObject(obj Object) {
 	for currentLevel < levels {
 		// fmt.Println("currentLevel: ", currentLevel)
 		index, b := AssignIndexOnBounds(obj, currentNode.Bounds)
+		// fmt.Println(index, b)
 		// fmt.Println("Assignindex: ", index)
 		if currentNode.Children[index] == nil { //no nodes on current index
 			currentNode.Children[index] = &SpatNode{Bounds: b, Children: make([]*SpatNode, 4)} //create a new node on current index
@@ -273,76 +271,100 @@ func Query(s *SpatNode, b Bounds, level int) []HeatMapGrid {
 	c2 := []HeatMapGrid{}
 	c3 := []HeatMapGrid{}
 	c4 := []HeatMapGrid{}
+	// if s.Level < level {
+	// if s1 != nil {
+	// 	b1 := s1.Bounds
+	// 	x := b.Lng
+	// 	y := b.Lat
+	// 	if x < b1.Lng+b1.Width && y > b1.Lat-b1.Height { //Intersect
+	// 		if (x == b1.Lng) && (y == b1.Lat) { //equal
+	// 			c1 = QueryAll(s1, level)
+	// 		} else {
+	// 			w := math.Min(b1.Lng+b1.Width-x, b.Width)
+	// 			h := math.Min(y-(b1.Lat-b1.Height), b.Height)
+	// 			x1 := b.Lng
+	// 			y1 := b.Lat
+	// 			c1 = Query(s1, Bounds{x1, y1, w, h}, level)
+	// 		}
+	// 	}
+	// }
+	// if s2 != nil {
+	// 	b1 := s2.Bounds
+	// 	x := b.Lng + b.Width
+	// 	y := b.Lat
+	// 	if x > b1.Lng && y > b1.Lat-b1.Height { //Intersect
+	// 		if (x == b1.Lat+b1.Width) && (y == b1.Lat) { //equal
+	// 			c2 = QueryAll(s2, level)
+	// 		} else {
+	// 			w := math.Min(x-b1.Lng, b.Width)
+	// 			h := math.Min(y-(b1.Lat-b1.Height), b.Height)
+	// 			x1 := b.Lng - w
+	// 			y1 := b.Lat
+	// 			c2 = Query(s2, Bounds{x1, y1, w, h}, level)
+	// 		}
+	// 	}
+	// }
+	// if s3 != nil {
+	// 	b1 := s3.Bounds
+	// 	x := b.Lng
+	// 	y := b.Lat - b.Height
+	// 	if x < b1.Lng+b1.Width && y < b1.Lat { //Intersect
+	// 		if (x == b1.Lng) && (y == b1.Lat-b1.Height) { //equal
+	// 			c3 = QueryAll(s3, level)
+	// 		} else {
+	// 			w := math.Min(b1.Lng+b1.Width-x, b.Width)
+	// 			h := math.Min(b1.Lat-y, b.Height)
+	// 			x1 := x
+	// 			y1 := y + h
+	// 			c3 = Query(s3, Bounds{x1, y1, w, h}, level)
+	// 		}
+	// 	}
+	// }
+	// if s4 != nil {
+	// 	b1 := s4.Bounds
+	// 	x := b.Lng + b.Width
+	// 	y := b.Lat - b.Height
+	// 	if x > b1.Lng && y < b.Lat {
+	// 		if (x == b1.Lng+b1.Width) && (y == b1.Lat-b1.Height) {
+	// 			c4 = QueryAll(s4, level)
+	// 		} else {
+	// 			w := math.Min(x-b1.Lng, b.Width)
+	// 			h := math.Min(b1.Lat-y, b.Height)
+	// 			x1 := x - w
+	// 			y1 := y + h
+	// 			c4 = Query(s4, Bounds{x1, y1, w, h}, level)
+	// 		}
+	// 	}
+	// }
 	if s.Level < level {
 		if s1 != nil {
 			b1 := s1.Bounds
-			x := b.Lng
-			y := b.Lat
-			if x < b1.Lng+b1.Width && y > b1.Lat-b1.Height { //Intersect
-				if (x == b1.Lng) && (y == b1.Lat) { //equal
-					c1 = QueryAll(s1, level)
-				} else {
-					w := math.Min(b1.Lng+b1.Width-x, b.Width)
-					h := math.Min(y-(b1.Lat-b1.Height), b.Height)
-					x1 := b.Lng
-					y1 := b.Lat
-					c1 = Query(s1, Bounds{x1, y1, w, h}, level)
-				}
+			if b1.Intersect(b) { //Intersect
+				c1 = Query(s1, b, level)
 			}
 		}
 		if s2 != nil {
 			b1 := s2.Bounds
-			x := b.Lng + b.Width
-			y := b.Lat
-			if x > b1.Lng && y > b1.Lat-b1.Height { //Intersect
-				if (x == b1.Lat+b1.Width) && (y == b1.Lat) { //equal
-					c2 = QueryAll(s2, level)
-				} else {
-					w := math.Min(x-b1.Lng, b.Width)
-					h := math.Min(y-(b1.Lat-b1.Height), b.Height)
-					x1 := b.Lng - w
-					y1 := b.Lat
-					c2 = Query(s2, Bounds{x1, y1, w, h}, level)
-				}
+			if b1.Intersect(b) { //Intersect
+				c2 = Query(s2, b, level)
 			}
 		}
 		if s3 != nil {
 			b1 := s3.Bounds
-			x := b.Lng
-			y := b.Lat - b.Height
-			if x < b1.Lng+b1.Width && y < b1.Lat { //Intersect
-				if (x == b1.Lng) && (y == b1.Lat-b1.Height) { //equal
-					c3 = QueryAll(s3, level)
-				} else {
-					w := math.Min(b1.Lng+b1.Width-x, b.Width)
-					h := math.Min(b1.Lat-y, b.Height)
-					x1 := x
-					y1 := y + h
-					c3 = Query(s3, Bounds{x1, y1, w, h}, level)
-				}
+			if b1.Intersect(b) { //Intersect
+				c3 = Query(s3, b, level)
 			}
 		}
 		if s4 != nil {
 			b1 := s4.Bounds
-			x := b.Lng + b.Width
-			y := b.Lat - b.Height
-			if x > b1.Lng && y < b.Lat {
-				if (x == b1.Lng+b1.Width) && (y == b1.Lat-b1.Height) {
-					c4 = QueryAll(s4, level)
-				} else {
-					w := math.Min(x-b1.Lng, b.Width)
-					h := math.Min(b1.Lat-y, b.Height)
-					x1 := x - w
-					y1 := y + h
-					c4 = Query(s4, Bounds{x1, y1, w, h}, level)
-				}
+			if b1.Intersect(b) { //Intersect
+				c4 = Query(s4, b, level)
 			}
 		}
 		res := append(c1, c2...)
 		res = append(res, c3...)
 		res = append(res, c4...)
 		return res
-
 	}
 	return []HeatMapGrid{{s.Bounds, s.CatRoot.Summary.Count}}
 
