@@ -112,30 +112,6 @@ func (s *Summary) Copy() *Summary {
 	return &Summary{Count: s.Count}
 }
 
-//UpdateSummary update current summary when adding an object to current SpatNode
-// func (s *SpatNode) UpdateSummary(obj Object, maxLevel int) {
-// 	hasOnlyOneChild, child := s.HasOnlyOneChild()
-// 	if s.Level < maxLevel {
-// 		if s.Summary == nil { //if it doesn't have summary
-// 			s.Summary = child.Summary
-// 		} else {
-// 			if hasOnlyOneChild {
-// 				s.Summary = child.Summary
-// 			} else {
-// 				s.Summary = s.Summary.Copy()
-// 				s.Summary.Count++
-// 			}
-// 		}
-// 	} else {
-// 		if s.Summary == nil {
-// 			s.Summary = &Summary{Count: 1}
-// 		} else {
-// 			s.Summary.Count++
-// 		}
-// 	}
-// 	// fmt.Println(s)
-// }
-
 //HasOnlyOneChild check if the cat node has only one child
 func (c *CatNode) HasOnlyOneChild() bool {
 	counter := 0
@@ -165,14 +141,14 @@ func (s *SpatNode) UpdateSummary(obj Object, maxLevel int, nc *Nanocube) {
 				copy(cpy, s.CatRoot.Children)
 				count := s.CatRoot.Summary.Count
 				// fmt.Println("original count", count)
-				s.CatRoot = &CatNode{Summary: &Summary{Count: count}, Children: cpy} //update cat root
+				s.CatRoot = &CatNode{Summary: &Summary{Count: count}, Children: cpy} //summary is new, children is old
 				if s.CatRoot.Children[index] == nil {
 					s.CatRoot.Children[index] = &Summary{Count: 1}
 				} else {
-					s.CatRoot.Children[index] = s.CatRoot.Children[index].Copy()
+					s.CatRoot.Children[index] = s.CatRoot.Children[index].Copy() //only make a new copy on this cat children
+					s.CatRoot.Children[index].Count++
 				}
 				s.CatRoot.Summary.Count++
-				s.CatRoot.Children[index].Count++
 			}
 		}
 	} else {
@@ -183,19 +159,20 @@ func (s *SpatNode) UpdateSummary(obj Object, maxLevel int, nc *Nanocube) {
 		} else { //need update
 			index := nc.getIndex(obj.Type)
 			if s.CatRoot.Children[index] != nil {
-				s.CatRoot.Children[index] = &Summary{Count: s.CatRoot.Children[index].Count + 1}
-				s.CatRoot.Summary.Count++
+				s.CatRoot.Children[index] = s.CatRoot.Children[index].Copy()
+				s.CatRoot.Children[index].Count++
+				// s.CatRoot.Summary.Count++
 			} else {
 				s.CatRoot.Children[index] = &Summary{Count: 1}
-				for i := 0; i < len(s.CatRoot.Children); i++ {
-					if i != index {
-						if s.CatRoot.Children[i] != nil {
-							s.CatRoot.Children[i] = s.CatRoot.Children[i].Copy() //deep copy
-						}
-					}
-				}
-				s.CatRoot.Summary.Count++
+				// for i := 0; i < len(s.CatRoot.Children); i++ { //all categories unaffected
+				// 	if i != index {
+				// 		if s.CatRoot.Children[i] != nil {
+				// 			s.CatRoot.Children[i] = &Summary{Count: s.CatRoot.Children[i].Count} //deep copy
+				// 		}
+				// 	}
+				// }
 			}
+			s.CatRoot.Summary = &Summary{Count: s.CatRoot.Summary.Count + 1}
 		}
 	}
 }
@@ -271,71 +248,6 @@ func Query(s *SpatNode, b Bounds, level int) []HeatMapGrid {
 	c2 := []HeatMapGrid{}
 	c3 := []HeatMapGrid{}
 	c4 := []HeatMapGrid{}
-	// if s.Level < level {
-	// if s1 != nil {
-	// 	b1 := s1.Bounds
-	// 	x := b.Lng
-	// 	y := b.Lat
-	// 	if x < b1.Lng+b1.Width && y > b1.Lat-b1.Height { //Intersect
-	// 		if (x == b1.Lng) && (y == b1.Lat) { //equal
-	// 			c1 = QueryAll(s1, level)
-	// 		} else {
-	// 			w := math.Min(b1.Lng+b1.Width-x, b.Width)
-	// 			h := math.Min(y-(b1.Lat-b1.Height), b.Height)
-	// 			x1 := b.Lng
-	// 			y1 := b.Lat
-	// 			c1 = Query(s1, Bounds{x1, y1, w, h}, level)
-	// 		}
-	// 	}
-	// }
-	// if s2 != nil {
-	// 	b1 := s2.Bounds
-	// 	x := b.Lng + b.Width
-	// 	y := b.Lat
-	// 	if x > b1.Lng && y > b1.Lat-b1.Height { //Intersect
-	// 		if (x == b1.Lat+b1.Width) && (y == b1.Lat) { //equal
-	// 			c2 = QueryAll(s2, level)
-	// 		} else {
-	// 			w := math.Min(x-b1.Lng, b.Width)
-	// 			h := math.Min(y-(b1.Lat-b1.Height), b.Height)
-	// 			x1 := b.Lng - w
-	// 			y1 := b.Lat
-	// 			c2 = Query(s2, Bounds{x1, y1, w, h}, level)
-	// 		}
-	// 	}
-	// }
-	// if s3 != nil {
-	// 	b1 := s3.Bounds
-	// 	x := b.Lng
-	// 	y := b.Lat - b.Height
-	// 	if x < b1.Lng+b1.Width && y < b1.Lat { //Intersect
-	// 		if (x == b1.Lng) && (y == b1.Lat-b1.Height) { //equal
-	// 			c3 = QueryAll(s3, level)
-	// 		} else {
-	// 			w := math.Min(b1.Lng+b1.Width-x, b.Width)
-	// 			h := math.Min(b1.Lat-y, b.Height)
-	// 			x1 := x
-	// 			y1 := y + h
-	// 			c3 = Query(s3, Bounds{x1, y1, w, h}, level)
-	// 		}
-	// 	}
-	// }
-	// if s4 != nil {
-	// 	b1 := s4.Bounds
-	// 	x := b.Lng + b.Width
-	// 	y := b.Lat - b.Height
-	// 	if x > b1.Lng && y < b.Lat {
-	// 		if (x == b1.Lng+b1.Width) && (y == b1.Lat-b1.Height) {
-	// 			c4 = QueryAll(s4, level)
-	// 		} else {
-	// 			w := math.Min(x-b1.Lng, b.Width)
-	// 			h := math.Min(b1.Lat-y, b.Height)
-	// 			x1 := x - w
-	// 			y1 := y + h
-	// 			c4 = Query(s4, Bounds{x1, y1, w, h}, level)
-	// 		}
-	// 	}
-	// }
 	if s.Level < level {
 		if s1 != nil {
 			b1 := s1.Bounds
@@ -367,5 +279,49 @@ func Query(s *SpatNode, b Bounds, level int) []HeatMapGrid {
 		return res
 	}
 	return []HeatMapGrid{{s.Bounds, s.CatRoot.Summary.Count}}
+}
 
+func QueryType(typeIndex int, s *SpatNode, b Bounds, level int) []HeatMapGrid {
+	s1 := s.Children[0]
+	s2 := s.Children[1]
+	s3 := s.Children[2]
+	s4 := s.Children[3]
+	c1 := []HeatMapGrid{}
+	c2 := []HeatMapGrid{}
+	c3 := []HeatMapGrid{}
+	c4 := []HeatMapGrid{}
+	if s.Level < level {
+		if s1 != nil {
+			b1 := s1.Bounds
+			if b1.Intersect(b) { //Intersect
+				c1 = QueryType(typeIndex, s1, b, level)
+			}
+		}
+		if s2 != nil {
+			b1 := s2.Bounds
+			if b1.Intersect(b) { //Intersect
+				c2 = QueryType(typeIndex, s2, b, level)
+			}
+		}
+		if s3 != nil {
+			b1 := s3.Bounds
+			if b1.Intersect(b) { //Intersect
+				c3 = QueryType(typeIndex, s3, b, level)
+			}
+		}
+		if s4 != nil {
+			b1 := s4.Bounds
+			if b1.Intersect(b) { //Intersect
+				c4 = QueryType(typeIndex, s4, b, level)
+			}
+		}
+		res := append(c1, c2...)
+		res = append(res, c3...)
+		res = append(res, c4...)
+		return res
+	}
+	if s.CatRoot.Children[typeIndex] == nil {
+		return []HeatMapGrid{}
+	}
+	return []HeatMapGrid{{s.Bounds, s.CatRoot.Children[typeIndex].Count}}
 }
