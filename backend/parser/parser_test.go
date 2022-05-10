@@ -79,3 +79,12 @@ func TestNanoCubeFromBigFile(t *testing.T) {
 		t.Errorf("these two sum should be equal")
 	}
 }
+
+func TestJsonSerialization(t *testing.T) {
+	n := CreateNanoCubeFromCsvFile("crime2020.csv", "Primary Type", 20, 1000)
+	PrintMemUsage()
+	fmt.Println("For JsonQuery:")
+	print(nc.JsonQuery(n.Root, nc.Bounds{Lng: -87.9345, Lat: 42.022585817, Width: 0.424, Height: 0.424}, 10))
+	fmt.Println("For JsonQueryType:")
+	print(nc.JsonQueryType(0, n.Root, nc.Bounds{Lng: -87.9345, Lat: 42.022585817, Width: 0.424, Height: 0.424}, 10))
+}

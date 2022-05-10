@@ -1,15 +1,24 @@
 import { useState, useMemo, useCallback, useRef } from "react";
 import {
-  GoogleMap,
+  GoogleMap, Rectangle
 } from "@react-google-maps/api";
 
 type LatLngLiteral = google.maps.LatLngLiteral;
 type MapOptions = google.maps.MapOptions;
-
+const bounds = {
+  north: 42.022585817,
+  south: 41.0226,
+  east: -87.9345,
+  west: -88.025
+}
+const rectangleOptions = {
+  strokeWeight: 0.1,
+  fillColor: "#Fa240c"
+}
 export default function Map() {
   const mapRef = useRef<GoogleMap>();
   const center = useMemo<LatLngLiteral>(
-    () => ({ lat: 43.45, lng: -80.49 }),
+    () => ({ lat: 41.8337329, lng: -87.7319639 }),
     []
   );
   const options = useMemo<MapOptions>(
@@ -33,6 +42,11 @@ export default function Map() {
           options={options}
           onLoad={onLoad}
         >
+            <Rectangle
+              options = {rectangleOptions}
+              onLoad={onLoad}
+              bounds={bounds}
+            />
         </GoogleMap>
       </div>
     </div>

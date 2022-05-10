@@ -1,5 +1,8 @@
 package main
 
+import "github.com/gin-gonic/gin"
+
 func main() {
-	println("entry for main")
+	r := gin.Default()
+	r.Run()
 }

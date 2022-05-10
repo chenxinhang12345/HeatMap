@@ -1,5 +1,7 @@
 package nanocube
 
+import "encoding/json"
+
 /*
 Nanocube ...
 */
@@ -27,8 +29,8 @@ type CatNode struct {
 
 //HeatMapGrid encode information for each grid of heatmap
 type HeatMapGrid struct {
-	B     Bounds
-	Count int64
+	B     Bounds `json:"bounds"`
+	Count int64  `json:"count"`
 }
 
 /*Bounds encode spatial information for each node
@@ -39,10 +41,10 @@ type HeatMapGrid struct {
 Lat --
 */
 type Bounds struct {
-	Lng    float64
-	Lat    float64
-	Width  float64
-	Height float64
+	Lng    float64 `json:"lng"`
+	Lat    float64 `json:"lat"`
+	Width  float64 `json:"width"`
+	Height float64 `json:"height"`
 }
 
 //Object represent event
@@ -281,6 +283,15 @@ func Query(s *SpatNode, b Bounds, level int) []HeatMapGrid {
 	return []HeatMapGrid{{s.Bounds, s.CatRoot.Summary.Count}}
 }
 
+func JsonQuery(s *SpatNode, b Bounds, level int) string {
+	var grids []HeatMapGrid = Query(s, b, level)
+	binStr, err := json.Marshal(grids)
+	if err != nil {
+		return "error with deserialize"
+	}
+	return string(binStr)
+}
+
 func QueryType(typeIndex int, s *SpatNode, b Bounds, level int) []HeatMapGrid {
 	s1 := s.Children[0]
 	s2 := s.Children[1]
@@ -324,4 +335,13 @@ func QueryType(typeIndex int, s *SpatNode, b Bounds, level int) []HeatMapGrid {
 		return []HeatMapGrid{}
 	}
 	return []HeatMapGrid{{s.Bounds, s.CatRoot.Children[typeIndex].Count}}
+}
+
+func JsonQueryType(typeIndex int, s *SpatNode, b Bounds, level int) string {
+	var grids []HeatMapGrid = QueryType(typeIndex, s, b, level)
+	binStr, err := json.Marshal(grids)
+	if err != nil {
+		return "error with deserialize"
+	}
+	return string(binStr)
 }
