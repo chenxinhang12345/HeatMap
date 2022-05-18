@@ -5,7 +5,7 @@ import (
 	"runtime"
 	"testing"
 
-	nc "github.com/chenxinhang12345/backend/nanocube"
+	nc "main/nanocube"
 )
 
 func PrintMemUsage() {

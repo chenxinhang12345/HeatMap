@@ -1,8 +1,8 @@
-import { useState, useMemo, useCallback, useRef } from "react";
+import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import {
   GoogleMap, Rectangle
 } from "@react-google-maps/api";
-import {convertNanoCubeBoundsToNSEW} from "../utils"
+import {convertNanoCubeBoundsToNSEW, getAllData} from "../utils"
 type LatLngLiteral = google.maps.LatLngLiteral;
 type MapOptions = google.maps.MapOptions;
 const bounds = {
@@ -32,12 +32,15 @@ const ncBounds1 = {"bounds":{"lng":-87.905227221,"lat":42.022535914,"width":0.37
 const ncBounds5 = {"bounds":{"lng":-87.905227221,"lat":41.9992184044375,"width":0.023317509562500227,"height":0.023317509562500227},"count":5}
 const ncBounds10 = {"bounds":{"lng":-87.59991358016602,"lat":41.755113226205076,"width":0.0007286721738281321,"height":0.0007286721738281321},"count":1}
 const ncBounds2 = {"bounds":{"lng":-87.905227221,"lat":42.022535914,"width":0.18654007650000182,"height":0.18654007650000182},"count":218}
-const rectangleOptions = {
-  strokeWeight: 0.1,
-  fillColor: "#Fa240c"
-}
+// const rectangleOptions = {
+//   strokeWeight: 0.1,
+//   fillColor: "#Fa240c",
+// }
 export default function Map() {
   const mapRef = useRef<GoogleMap>();
+  const [zoom, setZoom] =useState <number | undefined>(10);
+  const [bounds, setBounds] = useState(null);
+  const [data, setData] = useState([]);
   const center = useMemo<LatLngLiteral>(
     () => ({ lat: 41.8337329, lng: -87.7319639 }),
     []
@@ -50,10 +53,26 @@ export default function Map() {
     []
   );
   const onLoad = useCallback((map) => (mapRef.current = map), []);
-
-  useEffect(() => {
-    // Update the document title using the browser API
-  });
+  const onBoundsChanged = () =>{
+    setZoom(mapRef.current?.getZoom());
+    setBounds(mapRef.current?.getBounds());
+  }
+  useEffect (()=>{
+    console.log('zoom', zoom);
+    console.log('bounds', bounds);
+    console.log('data', data);
+    const minLat = bounds?.Ab?.h;
+    const maxLat = bounds?.Ab?.j;
+    const minLng = bounds?.Va?.h;
+    const maxLng = bounds?.Va?.j;
+    console.log(minLat,maxLat,minLng,maxLng);
+    getAllData(minLat,maxLat,minLng,maxLng,zoom).then(
+      (res) =>{
+        setData(res.data.data);
+      }
+    )
+    
+  },[bounds])
   return (
     <div className="container">
       <div className="controls">
@@ -65,20 +84,23 @@ export default function Map() {
           center={center}
           mapContainerClassName="map-container"
           options={options}
+          onZoomChanged={onBoundsChanged}
+          onDragEnd = {onBoundsChanged}
           onLoad={onLoad}
         >
-          <Rectangle
-              options = {rectangleOptions}
-              bounds={convertNanoCubeBoundsToNSEW(ncBounds1)}
-            />
-            <Rectangle
-              options = {rectangleOptions}
-              bounds={convertNanoCubeBoundsToNSEW(ncBounds2)}
-            />
-            <Rectangle
-              options = {rectangleOptions}
-              bounds={convertNanoCubeBoundsToNSEW(ncBounds5)}
-            />
+          {
+            data?.map((cube,index)=>{
+              const {rectBounds, rectOpacity} = convertNanoCubeBoundsToNSEW(cube);
+              const rectangleOptions = {
+                strokeWeight: 0.1,
+                fillColor: "#Fa240c",
+                fillOpacity: rectOpacity
+              }
+              return (
+                <Rectangle options = {rectangleOptions} bounds={rectBounds}/>
+              )
+            })
+          }
             
         </GoogleMap>
       </div>
