@@ -12,5 +12,6 @@ func main() {
 	r := gin.Default()
 	r.Use(cors.Default())
 	r.GET("/cubes", controllers.QueryAll)
+	r.GET("/types", controllers.QueryTypes)
 	r.Run()
 }

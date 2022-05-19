@@ -23,8 +23,8 @@ a {
 .controls {
   width: 20%;
   padding: 1rem;
-  background: #14161a;
-  color: #fff;
+  background: #e5cef4;
+  color: rgb(52, 50, 50);
 }
 
 .controls input {

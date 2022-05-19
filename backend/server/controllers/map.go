@@ -56,32 +56,47 @@ func QueryAll(c *gin.Context) {
 	minLng := c.Query("minLng")
 	maxLng := c.Query("maxLng")
 	zoomStr := c.Query("zoom")
+	typeStr := c.Query("type")
+	var grids []nanocube.HeatMapGrid
 	minlat, err := strconv.ParseFloat(minLat, 64)
 	if err != nil {
-		c.JSON(http.StatusOK, gin.H{"data": "[]"})
+		c.JSON(http.StatusOK, gin.H{"data": grids})
 	}
 	maxlat, err := strconv.ParseFloat(maxLat, 64)
 	if err != nil {
-		c.JSON(http.StatusOK, gin.H{"data": "[]"})
+		c.JSON(http.StatusOK, gin.H{"data": grids})
 	}
 	minlng, err := strconv.ParseFloat(minLng, 64)
 	if err != nil {
-		c.JSON(http.StatusOK, gin.H{"data": "[]"})
+		c.JSON(http.StatusOK, gin.H{"data": grids})
 	}
 	maxlng, err := strconv.ParseFloat(maxLng, 64)
 	if err != nil {
-		c.JSON(http.StatusOK, gin.H{"data": "[]"})
+		c.JSON(http.StatusOK, gin.H{"data": grids})
 	}
 	zoom, err := strconv.Atoi(zoomStr)
 	if err != nil {
-		c.JSON(http.StatusOK, gin.H{"data": "[]"})
+		c.JSON(http.StatusOK, gin.H{"data": grids})
 	}
-	println(minlat, maxlat, minlng, maxlng, zoom)
+	typeNum, err := strconv.Atoi(typeStr)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"data": grids})
+	}
+	println(minlat, maxlat, minlng, maxlng, zoom, typeNum)
 	lat := maxlat
 	lng := minlng
 	width := maxlng - minlng
 	height := maxlat - minlat
-	var grids = nanocube.Query(Nanocube.Root, nanocube.Bounds{Lng: lng, Lat: lat, Width: width, Height: height}, zoom-5)
+
+	if typeNum < 0 {
+		grids = nanocube.Query(Nanocube.Root, nanocube.Bounds{Lng: lng, Lat: lat, Width: width, Height: height}, zoom-5)
+	} else {
+		grids = nanocube.QueryType(typeNum, Nanocube.Root, nanocube.Bounds{Lng: lng, Lat: lat, Width: width, Height: height}, zoom-5)
+	}
 	var rects = convertGridsToRectangles(grids)
 	c.JSON(http.StatusOK, gin.H{"data": rects})
+}
+
+func QueryTypes(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{"data": Nanocube.Index})
 }
