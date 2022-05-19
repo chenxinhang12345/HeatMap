@@ -18,18 +18,19 @@ var Nanocube *nanocube.Nanocube
 func InitNanoCube() {
 	filePath := "./parser/crime2020.csv"
 	catColumn := "Primary Type"
-	level := 20
+	level := 30
 	numPoints := 100000
 	Nanocube = parser.CreateNanoCubeFromCsvFile(filePath, catColumn, level, numPoints, true)
 }
 
 //computeOpacity helper function for computing the opacity value. Algorithnm is from paper
-//https://idl.cs.washington.edu/files/2013-imMens-EuroVis.pdf
-func computeOpacity(count int64, max int64, min int64, alpha float64, gamma float64) float64 {
+//https://idl.cs.washington.edu/files/2013-imMens-EuroVis.pdf eps is to prevent NaN
+func computeOpacity(count int64, max int64, min int64, alpha float64, gamma float64, eps float64) float64 {
 	X := float64(count)
 	maxX := float64(max)
 	minX := float64(min)
-	Y := alpha + math.Pow(((X-minX)/(maxX-minX)), gamma)*(1-alpha)
+	Y := alpha + math.Pow(((X-minX+eps)/(maxX-minX+eps)), gamma)*(1-alpha)
+	// println("formula parameters", X, maxX, minX, Y)
 	return Y
 }
 
@@ -37,6 +38,7 @@ func convertGridsToRectangles(grids []nanocube.HeatMapGrid) []models.Rectangle {
 	res := []models.Rectangle{}
 	var maxCount int64 = 0
 	var minCount int64 = 1e9
+
 	for _, grid := range grids {
 		b := grid.B
 		count := grid.Count
@@ -45,7 +47,7 @@ func convertGridsToRectangles(grids []nanocube.HeatMapGrid) []models.Rectangle {
 		res = append(res, models.Rectangle{N: b.Lat, S: b.Lat - b.Height, E: b.Lng + b.Width, W: b.Lng, Count: count})
 	}
 	for i := 0; i < len(res); i++ {
-		res[i].Opacity = computeOpacity(res[i].Count, maxCount, minCount, 0.15, 0.33333) //use papar's parameters
+		res[i].Opacity = computeOpacity(res[i].Count, maxCount, minCount, 0.15, 0.33333, 1e-9) //use papar's parameters
 	}
 	return res
 }
@@ -82,18 +84,22 @@ func QueryAll(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{"data": grids})
 	}
-	println(minlat, maxlat, minlng, maxlng, zoom, typeNum)
+	// println("print info:", minlat, maxlat, minlng, maxlng, zoom, typeNum)
 	lat := maxlat
 	lng := minlng
 	width := maxlng - minlng
 	height := maxlat - minlat
 
-	if typeNum < 0 {
-		grids = nanocube.Query(Nanocube.Root, nanocube.Bounds{Lng: lng, Lat: lat, Width: width, Height: height}, zoom-5)
+	if typeNum < 0 { //Query all
+		grids = nanocube.Query(Nanocube.Root, nanocube.Bounds{Lng: lng, Lat: lat, Width: width, Height: height}, zoom-4)
 	} else {
-		grids = nanocube.QueryType(typeNum, Nanocube.Root, nanocube.Bounds{Lng: lng, Lat: lat, Width: width, Height: height}, zoom-5)
+		grids = nanocube.QueryType(typeNum, Nanocube.Root, nanocube.Bounds{Lng: lng, Lat: lat, Width: width, Height: height}, zoom-4)
 	}
 	var rects = convertGridsToRectangles(grids)
+	// for _, rect := range rects {
+	// 	println('o', rect.Opacity)
+	// 	println('c', rect.Count)
+	// }
 	c.JSON(http.StatusOK, gin.H{"data": rects})
 }
 
