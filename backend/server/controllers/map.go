@@ -20,7 +20,7 @@ func InitNanoCube() {
 	catColumn := "Primary Type"
 	level := 20
 	numPoints := 100000
-	Nanocube = parser.CreateNanoCubeFromCsvFile(filePath, catColumn, level, numPoints)
+	Nanocube = parser.CreateNanoCubeFromCsvFile(filePath, catColumn, level, numPoints, true)
 }
 
 //computeOpacity helper function for computing the opacity value. Algorithnm is from paper

@@ -70,7 +70,7 @@ func ParseObjects(filename string, typeHead string) []nc.Object {
 }
 
 //CreateNanoCubeFromCsvFile return a nanocube pointer
-func CreateNanoCubeFromCsvFile(filePath string, typeHead string, maxDepth int, limit int) *nc.Nanocube {
+func CreateNanoCubeFromCsvFile(filePath string, typeHead string, maxDepth int, limit int, isWithSharing bool) *nc.Nanocube {
 	objects := ParseObjects(filePath, typeHead)
 	minLng := 1e9
 	maxLng := -1e9
@@ -102,14 +102,7 @@ func CreateNanoCubeFromCsvFile(filePath string, typeHead string, maxDepth int, l
 	}
 	res := nc.SetUpCube(maxDepth, nc.Bounds{Lng: minLng, Lat: maxLat, Width: b, Height: b}, typesArray)
 	for i := 0; i < limit; i++ {
-		// //d
-		// fmt.Println(i, "th", "add")
-		// //d
-		res.AddObject(objects[i])
-		// //debug
-		// boxes := nc.QueryAll(res.Root, 2)
-		// fmt.Println(boxes)
-		// //debug
+		res.AddObject(objects[i], isWithSharing)
 	}
 	fmt.Println("Total number of objects: ", limit)
 	return res

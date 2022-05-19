@@ -38,13 +38,8 @@ func bToMb(b uint64) uint64 {
 // }
 
 func TestNanoCubeFromBigFile(t *testing.T) {
-	n := CreateNanoCubeFromCsvFile("crime2020.csv", "Primary Type", 20, 101000)
+	n := CreateNanoCubeFromCsvFile("crime2020.csv", "Primary Type", 20, 101000, true)
 	PrintMemUsage()
-	// fmt.Println(n.Root.Children[0])
-	// fmt.Println(n.Root.Children[1].CatRoot.Summary)
-	// fmt.Println(n.Root.Children[2].CatRoot.Summary)
-	// fmt.Println(n.Root.Children[3].CatRoot.Summary)
-	// boxes := nc.Query(n.Root, nc.Bounds{-87.9345, 42.022585817, 2, 2}, 4)
 	fmt.Println("all types:", n.Index)
 	num_cats := len(n.Index)
 	fmt.Println("we have total of ", len(n.Index), "categories")
@@ -81,10 +76,22 @@ func TestNanoCubeFromBigFile(t *testing.T) {
 }
 
 func TestJsonSerialization(t *testing.T) {
-	n := CreateNanoCubeFromCsvFile("crime2020.csv", "Primary Type", 20, 1000)
+	n := CreateNanoCubeFromCsvFile("crime2020.csv", "Primary Type", 20, 1000, true)
 	PrintMemUsage()
 	fmt.Println("For JsonQuery:")
 	print(nc.JsonQuery(n.Root, nc.Bounds{Lng: -87.9345, Lat: 42.022585817, Width: 0.424, Height: 0.424}, 2))
 	fmt.Println("For JsonQueryType:")
 	// print(nc.JsonQueryType(0, n.Root, nc.Bounds{Lng: -87.9345, Lat: 42.022585817, Width: 0.424, Height: 0.424}, 10))
+}
+
+func TestMemUsageWithSharing(t *testing.T) {
+	n := CreateNanoCubeFromCsvFile("crime2020.csv", "Primary Type", 20, 100000, true)
+	PrintMemUsage()
+	print(n.Root)
+}
+
+func TestMemUsageWithoutSharing(t *testing.T) {
+	n := CreateNanoCubeFromCsvFile("crime2020.csv", "Primary Type", 20, 100000, false)
+	PrintMemUsage()
+	print(n.Root)
 }

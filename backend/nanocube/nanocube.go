@@ -166,21 +166,64 @@ func (s *SpatNode) UpdateSummary(obj Object, maxLevel int, nc *Nanocube) {
 				// s.CatRoot.Summary.Count++
 			} else {
 				s.CatRoot.Children[index] = &Summary{Count: 1}
-				// for i := 0; i < len(s.CatRoot.Children); i++ { //all categories unaffected
-				// 	if i != index {
-				// 		if s.CatRoot.Children[i] != nil {
-				// 			s.CatRoot.Children[i] = &Summary{Count: s.CatRoot.Children[i].Count} //deep copy
-				// 		}
-				// 	}
-				// }
 			}
 			s.CatRoot.Summary = &Summary{Count: s.CatRoot.Summary.Count + 1}
 		}
 	}
 }
 
+func (c *CatNode) Copy() *CatNode {
+	length := len(c.Children)
+	childrenCopy := make([]*Summary, length)
+	for i := 0; i < len(c.Children); i++ {
+		if c.Children[i] != nil {
+			childrenCopy[i] = c.Children[i].Copy()
+		} else {
+			childrenCopy[i] = nil
+		}
+	}
+	return &CatNode{Summary: c.Summary.Copy(), Children: childrenCopy}
+}
+
+func (s *SpatNode) UpdateSummaryWithoutSharing(obj Object, maxLevel int, nc *Nanocube) {
+	// _, child := s.HasOnlyOneChild()
+	if s.Level < maxLevel {
+		if s.CatRoot == nil {
+			s.CatRoot = &CatNode{Summary: &Summary{Count: 1}, Children: make([]*Summary, len(nc.Types))}
+			index := nc.getIndex(obj.Type) //update categorical node
+			if s.CatRoot.Children[index] != nil {
+				s.CatRoot.Children[index].Count++
+			} else {
+				s.CatRoot.Children[index] = &Summary{Count: 1}
+			}
+		} else {
+			index := nc.getIndex(obj.Type) //update categorical node
+			if s.CatRoot.Children[index] != nil {
+				s.CatRoot.Children[index].Count++
+			} else {
+				s.CatRoot.Children[index] = &Summary{Count: 1}
+			}
+			s.CatRoot.Summary.Count++
+		}
+	} else {
+		if s.CatRoot == nil {
+			s.CatRoot = &CatNode{Summary: &Summary{Count: 1}, Children: make([]*Summary, len(nc.Types))}
+			index := nc.getIndex(obj.Type)
+			s.CatRoot.Children[index] = &Summary{Count: 1}
+		} else { //need update
+			index := nc.getIndex(obj.Type)
+			if s.CatRoot.Children[index] != nil {
+				s.CatRoot.Children[index].Count++
+			} else {
+				s.CatRoot.Children[index] = &Summary{Count: 1}
+			}
+			s.CatRoot.Summary.Count++
+		}
+	}
+}
+
 //AddObject Add an object
-func (nc *Nanocube) AddObject(obj Object) {
+func (nc *Nanocube) AddObject(obj Object, isWithSharing bool) {
 	stack := make([]*SpatNode, 0)
 	levels := nc.MaxLevel
 	currentNode := nc.Root
@@ -203,7 +246,11 @@ func (nc *Nanocube) AddObject(obj Object) {
 	stack = append(stack, currentNode) //update leaves
 	for i := len(stack) - 1; i >= 0; i-- {
 		currentNode = stack[i]
-		currentNode.UpdateSummary(obj, levels, nc)
+		if isWithSharing {
+			currentNode.UpdateSummary(obj, levels, nc)
+		} else {
+			currentNode.UpdateSummaryWithoutSharing(obj, levels, nc)
+		}
 	}
 }
 
