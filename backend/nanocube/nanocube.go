@@ -1,6 +1,9 @@
 package nanocube
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"sort"
+)
 
 /*
 Nanocube ...
@@ -52,13 +55,81 @@ type Object struct {
 	Lng       float64
 	Lat       float64
 	Type      string
-	TimeStamp int
+	TimeStamp int64
 }
 
 //Summary a summary for a bunch of nodes
 type Summary struct {
-	Count             int64
-	TimeStampedCounts []int64
+	Count           int64
+	TimeStampCounts []TemporalCount
+}
+
+//TemporalCount tuple in timestampcounts, provide seconds and number of spatial points at this timestamp (culmulative)
+type TemporalCount struct {
+	TimeStamp int64
+	Count     int64
+}
+
+//InsertAt insert the temporal count at a specific index in temporal count array
+func InsertAt(data []TemporalCount, i int, v TemporalCount) []TemporalCount {
+	if i == len(data) {
+		return append(data, v)
+	}
+	data = append(data[:i+1], data[i:]...)
+	data[i] = v
+	return data
+}
+
+//AddTemporalCount add a temporal count in temporal count array make the array sorted and with culmulative count
+func AddTemporalCount(tc TemporalCount, data []TemporalCount) []TemporalCount {
+	f := func(i int) bool {
+		return data[i].TimeStamp >= tc.TimeStamp
+	}
+	i := sort.Search(len(data), f)
+	if i < len(data) && data[i].TimeStamp == tc.TimeStamp {
+		data[i].Count += tc.Count
+	} else {
+		data = InsertAt(data, i, tc)
+		if i != 0 {
+			data[i].Count += data[i-1].Count
+		}
+	}
+	for j := i + 1; j < len(data); j++ {
+		data[j].Count += data[i].Count
+	}
+	return data
+}
+
+func TemporalCountRangeQuery(data []TemporalCount, startTime int64, endTime int64) int64 {
+	if len(data) == 0 {
+		return 0
+	}
+	println("len", len(data))
+	fstart := func(i int) bool {
+		return data[i].TimeStamp >= startTime
+	}
+	fend := func(i int) bool {
+		return data[i].TimeStamp >= endTime
+	}
+	startIndex := sort.Search(len(data), fstart)
+	endIndex := sort.Search(len(data), fend)
+	if endIndex == len(data) {
+		endIndex -= 1
+	}
+	if startIndex == len(data) {
+		startIndex -= 1
+	}
+	println("step1", startIndex, endIndex)
+	if startIndex == endIndex {
+		if startIndex > 0 {
+			return data[endIndex].Count - data[endIndex-1].Count
+		} else {
+			return data[startIndex].Count
+		}
+	}
+	// println(startIndex, endIndex)
+	// println(data[endIndex].Count, data[startIndex].Count)
+	return data[endIndex].Count - data[startIndex].Count
 }
 
 //SetUpCube Initialize the cube
@@ -109,9 +180,17 @@ func (s *SpatNode) HasOnlyOneChild() (bool, *SpatNode) {
 	return (counter == 1), retptr
 }
 
+func Copy(tc TemporalCount) TemporalCount {
+	return TemporalCount{TimeStamp: tc.TimeStamp, Count: tc.Count}
+}
+
 //Copy return a deep copy of a summary
 func (s *Summary) Copy() *Summary {
-	return &Summary{Count: s.Count}
+	ts := []TemporalCount{}
+	for _, t := range s.TimeStampCounts {
+		ts = append(ts, Copy(t))
+	}
+	return &Summary{Count: s.Count, TimeStampCounts: ts}
 }
 
 //HasOnlyOneChild check if the cat node has only one child
@@ -141,16 +220,19 @@ func (s *SpatNode) UpdateSummary(obj Object, maxLevel int, nc *Nanocube) {
 				index := nc.getIndex(obj.Type) //update categorical node
 				cpy := make([]*Summary, len(s.CatRoot.Children))
 				copy(cpy, s.CatRoot.Children)
-				count := s.CatRoot.Summary.Count
+				// count := s.CatRoot.Summary.Count
+				// temporalCounts := s.CatRoot.Summary.TimeStampCounts
 				// fmt.Println("original count", count)
-				s.CatRoot = &CatNode{Summary: &Summary{Count: count}, Children: cpy} //summary is new, children is old
+				s.CatRoot = &CatNode{Summary: s.CatRoot.Summary.Copy(), Children: cpy} //summary is new, children is old
 				if s.CatRoot.Children[index] == nil {
-					s.CatRoot.Children[index] = &Summary{Count: 1}
+					s.CatRoot.Children[index] = &Summary{Count: 1, TimeStampCounts: []TemporalCount{{TimeStamp: obj.TimeStamp, Count: 1}}} //init summary
 				} else {
-					s.CatRoot.Children[index] = s.CatRoot.Children[index].Copy() //only make a new copy on this cat children
+					s.CatRoot.Children[index] = s.CatRoot.Children[index].Copy() //only make a new copy on this cat children and then update
 					s.CatRoot.Children[index].Count++
+					s.CatRoot.Children[index].TimeStampCounts = AddTemporalCount(TemporalCount{TimeStamp: obj.TimeStamp, Count: 1}, s.CatRoot.Children[index].TimeStampCounts)
 				}
 				s.CatRoot.Summary.Count++
+				s.CatRoot.Summary.TimeStampCounts = AddTemporalCount(TemporalCount{TimeStamp: obj.TimeStamp, Count: 1}, s.CatRoot.Summary.TimeStampCounts)
 			}
 		}
 	} else {
@@ -163,11 +245,13 @@ func (s *SpatNode) UpdateSummary(obj Object, maxLevel int, nc *Nanocube) {
 			if s.CatRoot.Children[index] != nil {
 				s.CatRoot.Children[index] = s.CatRoot.Children[index].Copy()
 				s.CatRoot.Children[index].Count++
-				// s.CatRoot.Summary.Count++
+				s.CatRoot.Children[index].TimeStampCounts = AddTemporalCount(TemporalCount{TimeStamp: obj.TimeStamp, Count: 1}, s.CatRoot.Children[index].TimeStampCounts)
 			} else {
-				s.CatRoot.Children[index] = &Summary{Count: 1}
+				s.CatRoot.Children[index] = &Summary{Count: 1, TimeStampCounts: []TemporalCount{{TimeStamp: obj.TimeStamp, Count: 1}}}
 			}
-			s.CatRoot.Summary = &Summary{Count: s.CatRoot.Summary.Count + 1}
+			s.CatRoot.Summary = s.CatRoot.Summary.Copy()
+			s.CatRoot.Summary.Count++
+			s.CatRoot.Summary.TimeStampCounts = AddTemporalCount(TemporalCount{TimeStamp: obj.TimeStamp, Count: 1}, s.CatRoot.Summary.TimeStampCounts)
 		}
 	}
 }
@@ -382,6 +466,52 @@ func QueryType(typeIndex int, s *SpatNode, b Bounds, level int) []HeatMapGrid {
 		return []HeatMapGrid{}
 	}
 	return []HeatMapGrid{{s.Bounds, s.CatRoot.Children[typeIndex].Count}}
+}
+
+func QueryTypeTime(startTime int64, endTime int64, typeIndex int, s *SpatNode, b Bounds, level int) []HeatMapGrid {
+	s1 := s.Children[0]
+	s2 := s.Children[1]
+	s3 := s.Children[2]
+	s4 := s.Children[3]
+	c1 := []HeatMapGrid{}
+	c2 := []HeatMapGrid{}
+	c3 := []HeatMapGrid{}
+	c4 := []HeatMapGrid{}
+	if s.Level < level {
+		if s1 != nil {
+			b1 := s1.Bounds
+			if b1.Intersect(b) { //Intersect
+				c1 = QueryTypeTime(startTime, endTime, typeIndex, s1, b, level)
+			}
+		}
+		if s2 != nil {
+			b1 := s2.Bounds
+			if b1.Intersect(b) { //Intersect
+				c2 = QueryTypeTime(startTime, endTime, typeIndex, s2, b, level)
+			}
+		}
+		if s3 != nil {
+			b1 := s3.Bounds
+			if b1.Intersect(b) { //Intersect
+				c3 = QueryTypeTime(startTime, endTime, typeIndex, s3, b, level)
+			}
+		}
+		if s4 != nil {
+			b1 := s4.Bounds
+			if b1.Intersect(b) { //Intersect
+				c4 = QueryTypeTime(startTime, endTime, typeIndex, s4, b, level)
+			}
+		}
+		res := append(c1, c2...)
+		res = append(res, c3...)
+		res = append(res, c4...)
+		return res
+	}
+	if s.CatRoot.Children[typeIndex] == nil {
+		return []HeatMapGrid{}
+	}
+	resCount := TemporalCountRangeQuery(s.CatRoot.Children[typeIndex].TimeStampCounts, startTime, endTime)
+	return []HeatMapGrid{{s.Bounds, resCount}}
 }
 
 func JsonQueryType(typeIndex int, s *SpatNode, b Bounds, level int) string {
