@@ -45,15 +45,24 @@ func TestCulSearch(t *testing.T) {
 	// expected := []nc.TemporalCount{{8, 1}, {9, 2}, {10, 3}}
 }
 
+func TestAddTemporalCount(t *testing.T) {
+	// data := []nc.TemporalCount{{TimeStamp: 12, Count: 1}, {TimeStamp: 19, Count: 2}}
+	adds := []nc.TemporalCount{{9, 1}, {10, 1}, {8, 1}, {6, 1}, {0, 1}, {4, 1}}
+	data := []nc.TemporalCount{}
+	for _, add := range adds {
+		data = nc.AddTemporalCount(add, data)
+	}
+	nc.PrintTimestampCounts(data)
+}
+
 func TestTimeStampRangeQuery(t *testing.T) {
-	tc := nc.TemporalCount{TimeStamp: 8, Count: 1}
-	data := []nc.TemporalCount{{TimeStamp: 12, Count: 1}, {TimeStamp: 19, Count: 2}}
-	// data := []nc.TemporalCount{}
-	data = nc.AddTemporalCount(tc, data)
-	// for _, t := range data {
-	// 	println(t.TimeStamp, t.Count, " ")
-	// }
-	res := nc.TemporalCountRangeQuery(data, 9, 20)
+	adds := []nc.TemporalCount{{9, 1}, {10, 1}, {8, 1}, {6, 1}, {0, 1}, {4, 1}}
+	data := []nc.TemporalCount{}
+	for _, add := range adds {
+		data = nc.AddTemporalCount(add, data)
+	}
+	nc.PrintTimestampCounts(data)
+	res := nc.TemporalCountRangeQuery(data, 11, 20)
 	println(res)
 }
 
@@ -66,7 +75,7 @@ func TestTimeStampRangeQuery(t *testing.T) {
 // }
 
 func TestNanoCubeFromBigFile(t *testing.T) {
-	n := CreateNanoCubeFromCsvFile("crime2020.csv", "Primary Type", "Date", 20, 10100, true)
+	n := CreateNanoCubeFromCsvFile("crime2020.csv", "Primary Type", "Date", 20, 10000, true)
 	PrintMemUsage()
 	fmt.Println("all types:", n.Index)
 	num_cats := len(n.Index)
@@ -115,6 +124,30 @@ func TestNanoCubeFromBigFile(t *testing.T) {
 	if sum_all_types != sum {
 		t.Errorf("these two sum should be equal")
 	}
+
+	sum_all_types = 0
+	for index := 0; index < num_cats; index++ {
+		boxes = nc.QueryTypeTime(1593325815, 1653016292, index, n.Root, nc.Bounds{Lng: -87.9345, Lat: 42.022585817, Width: 0.424, Height: 0.424}, 18)
+		sum_type := 0
+		for _, box := range boxes {
+			sum_type += int(box.Count)
+		}
+		fmt.Println("Total sum type time for", index, sum_type)
+		sum_all_types += sum_type
+	}
+	fmt.Println("all types count during a Interval:", sum_all_types)
+
+	sum_all_types = 0
+	for index := 0; index < num_cats; index++ {
+		boxes = nc.QueryTypeTime(0, 1593325814, index, n.Root, nc.Bounds{Lng: -87.9345, Lat: 42.022585817, Width: 0.424, Height: 0.424}, 18)
+		sum_type := 0
+		for _, box := range boxes {
+			sum_type += int(box.Count)
+		}
+		fmt.Println("Total sum type time for", index, sum_type)
+		sum_all_types += sum_type
+	}
+	fmt.Println("all types count during another Interval:", sum_all_types)
 
 }
 

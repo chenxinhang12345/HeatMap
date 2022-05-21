@@ -70,6 +70,12 @@ type TemporalCount struct {
 	Count     int64
 }
 
+func PrintTimestampCounts(data []TemporalCount) {
+	for _, tc := range data {
+		print("(", tc.TimeStamp, ",", tc.Count, ") ")
+	}
+}
+
 //InsertAt insert the temporal count at a specific index in temporal count array
 func InsertAt(data []TemporalCount, i int, v TemporalCount) []TemporalCount {
 	if i == len(data) {
@@ -95,7 +101,7 @@ func AddTemporalCount(tc TemporalCount, data []TemporalCount) []TemporalCount {
 		}
 	}
 	for j := i + 1; j < len(data); j++ {
-		data[j].Count += data[i].Count
+		data[j].Count += 1
 	}
 	return data
 }
@@ -104,7 +110,6 @@ func TemporalCountRangeQuery(data []TemporalCount, startTime int64, endTime int6
 	if len(data) == 0 {
 		return 0
 	}
-	println("len", len(data))
 	fstart := func(i int) bool {
 		return data[i].TimeStamp >= startTime
 	}
@@ -119,7 +124,16 @@ func TemporalCountRangeQuery(data []TemporalCount, startTime int64, endTime int6
 	if startIndex == len(data) {
 		startIndex -= 1
 	}
-	println("step1", startIndex, endIndex)
+	// println(startIndex, endIndex)
+	if endTime < data[endIndex].TimeStamp {
+		endIndex -= 1
+	}
+	if startTime > data[startIndex].TimeStamp {
+		startIndex += 1
+	}
+	if startIndex > endIndex {
+		return 0
+	}
 	if startIndex == endIndex {
 		if startIndex > 0 {
 			return data[endIndex].Count - data[endIndex-1].Count
@@ -127,9 +141,20 @@ func TemporalCountRangeQuery(data []TemporalCount, startTime int64, endTime int6
 			return data[startIndex].Count
 		}
 	}
-	// println(startIndex, endIndex)
+	var res int64
+	if startIndex > 0 {
+		res = data[endIndex].Count - data[startIndex-1].Count
+	} else {
+		res = data[endIndex].Count
+	}
+	// if res != int64(len(data)) {
+	// println("s, e", startIndex, endIndex)
 	// println(data[endIndex].Count, data[startIndex].Count)
-	return data[endIndex].Count - data[startIndex].Count
+	// println("res", res, "len", len(data))
+	// PrintTimestampCounts(data)
+	// println("")
+	// }
+	return res
 }
 
 //SetUpCube Initialize the cube
@@ -237,7 +262,7 @@ func (s *SpatNode) UpdateSummary(obj Object, maxLevel int, nc *Nanocube) {
 		}
 	} else {
 		if s.CatRoot == nil {
-			s.CatRoot = &CatNode{Summary: &Summary{Count: 1}, Children: make([]*Summary, len(nc.Types))}
+			s.CatRoot = &CatNode{Summary: &Summary{Count: 1, TimeStampCounts: []TemporalCount{{TimeStamp: obj.TimeStamp, Count: 1}}}, Children: make([]*Summary, len(nc.Types))}
 			index := nc.getIndex(obj.Type)
 			s.CatRoot.Children[index] = s.CatRoot.Summary
 		} else { //need update
@@ -511,6 +536,9 @@ func QueryTypeTime(startTime int64, endTime int64, typeIndex int, s *SpatNode, b
 		return []HeatMapGrid{}
 	}
 	resCount := TemporalCountRangeQuery(s.CatRoot.Children[typeIndex].TimeStampCounts, startTime, endTime)
+	// if s.CatRoot.Children[typeIndex].Count > 1 {
+	// 	println("total count", s.CatRoot.Children[typeIndex].Count)
+	// }
 	return []HeatMapGrid{{s.Bounds, resCount}}
 }
 
