@@ -125,12 +125,14 @@ func TemporalCountRangeQuery(data []TemporalCount, startTime int64, endTime int6
 		startIndex -= 1
 	}
 	// println(startIndex, endIndex)
+	// println(endTime, data[endIndex].TimeStamp)
 	if endTime < data[endIndex].TimeStamp {
 		endIndex -= 1
 	}
 	if startTime > data[startIndex].TimeStamp {
 		startIndex += 1
 	}
+	// println(startIndex, endIndex)
 	if startIndex > endIndex {
 		return 0
 	}
@@ -532,13 +534,19 @@ func QueryTypeTime(startTime int64, endTime int64, typeIndex int, s *SpatNode, b
 		res = append(res, c4...)
 		return res
 	}
-	if s.CatRoot.Children[typeIndex] == nil {
-		return []HeatMapGrid{}
+
+	var resCount int64
+	if typeIndex != -1 {
+		if s.CatRoot.Children[typeIndex] == nil {
+			return []HeatMapGrid{}
+		}
+		resCount = TemporalCountRangeQuery(s.CatRoot.Children[typeIndex].TimeStampCounts, startTime, endTime) //query on specific category
+	} else {
+		resCount = TemporalCountRangeQuery(s.CatRoot.Summary.TimeStampCounts, startTime, endTime) //query all regardless categories
 	}
-	resCount := TemporalCountRangeQuery(s.CatRoot.Children[typeIndex].TimeStampCounts, startTime, endTime)
-	// if s.CatRoot.Children[typeIndex].Count > 1 {
-	// 	println("total count", s.CatRoot.Children[typeIndex].Count)
-	// }
+	if resCount == 0 {
+		return []HeatMapGrid{} //Do not need to render
+	}
 	return []HeatMapGrid{{s.Bounds, resCount}}
 }
 

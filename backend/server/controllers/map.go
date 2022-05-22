@@ -18,9 +18,10 @@ var Nanocube *nanocube.Nanocube
 func InitNanoCube() {
 	filePath := "./parser/crime2020.csv"
 	catColumn := "Primary Type"
-	level := 30
-	numPoints := 100000
-	Nanocube = parser.CreateNanoCubeFromCsvFile(filePath, catColumn, level, numPoints, true)
+	timeColumn := "Date"
+	level := 20
+	numPoints := 10000
+	Nanocube = parser.CreateNanoCubeFromCsvFile(filePath, catColumn, timeColumn, level, numPoints, true)
 }
 
 //computeOpacity helper function for computing the opacity value. Algorithnm is from paper
@@ -30,7 +31,6 @@ func computeOpacity(count int64, max int64, min int64, alpha float64, gamma floa
 	maxX := float64(max)
 	minX := float64(min)
 	Y := alpha + math.Pow(((X-minX+eps)/(maxX-minX+eps)), gamma)*(1-alpha)
-	// println("formula parameters", X, maxX, minX, Y)
 	return Y
 }
 
@@ -105,4 +105,61 @@ func QueryAll(c *gin.Context) {
 
 func QueryTypes(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": Nanocube.Index})
+}
+
+func QueryWithTypeAndTime(c *gin.Context) {
+	minLat := c.Query("minLat")
+	maxLat := c.Query("maxLat")
+	minLng := c.Query("minLng")
+	maxLng := c.Query("maxLng")
+	zoomStr := c.Query("zoom")
+	typeStr := c.Query("type")
+	startTimeStr := c.Query("startTime")
+	endTimeStr := c.Query("endTime")
+	var grids []nanocube.HeatMapGrid
+	minlat, err := strconv.ParseFloat(minLat, 64)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"data": grids})
+	}
+	maxlat, err := strconv.ParseFloat(maxLat, 64)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"data": grids})
+	}
+	minlng, err := strconv.ParseFloat(minLng, 64)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"data": grids})
+	}
+	maxlng, err := strconv.ParseFloat(maxLng, 64)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"data": grids})
+	}
+	zoom, err := strconv.Atoi(zoomStr)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"data": grids})
+	}
+	typeNum, err := strconv.Atoi(typeStr)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"data": grids})
+	}
+	startTime, err := strconv.ParseInt(startTimeStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"data": grids})
+	}
+	endTime, err := strconv.ParseInt(endTimeStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"data": grids})
+	}
+	lat := maxlat
+	lng := minlng
+	width := maxlng - minlng
+	height := maxlat - minlat
+
+	if typeNum < 0 { //Query all
+		grids = nanocube.QueryTypeTime(startTime, endTime, typeNum, Nanocube.Root, nanocube.Bounds{Lng: lng, Lat: lat, Width: width, Height: height}, zoom-4)
+	} else {
+		grids = nanocube.QueryTypeTime(startTime, endTime, typeNum, Nanocube.Root, nanocube.Bounds{Lng: lng, Lat: lat, Width: width, Height: height}, zoom-4)
+	}
+	var rects = convertGridsToRectangles(grids)
+	c.JSON(http.StatusOK, gin.H{"data": rects})
+
 }

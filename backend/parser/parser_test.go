@@ -56,13 +56,13 @@ func TestAddTemporalCount(t *testing.T) {
 }
 
 func TestTimeStampRangeQuery(t *testing.T) {
-	adds := []nc.TemporalCount{{9, 1}, {10, 1}, {8, 1}, {6, 1}, {0, 1}, {4, 1}}
+	adds := []nc.TemporalCount{{9, 1}, {10, 1}, {8, 1}, {6, 1}, {3, 1}, {4, 1}}
 	data := []nc.TemporalCount{}
 	for _, add := range adds {
 		data = nc.AddTemporalCount(add, data)
 	}
 	nc.PrintTimestampCounts(data)
-	res := nc.TemporalCountRangeQuery(data, 11, 20)
+	res := nc.TemporalCountRangeQuery(data, 0, 0)
 	println(res)
 }
 

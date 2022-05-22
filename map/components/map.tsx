@@ -17,7 +17,7 @@ export default function Map() {
   const [bounds, setBounds] = useState(null);
   const [data, setData] = useState([]);
   const [types, setTypes] = useState({});
-  const [currentType, setCurrentType] = useState(-1);
+  const [currentType, setCurrentType] = useState('-1');
   const center = useMemo<LatLngLiteral>(
     () => ({ lat: 41.8337329, lng: -87.7319639 }),
     []
@@ -40,10 +40,18 @@ export default function Map() {
   }
   useEffect (()=>{
     console.log('bounds', bounds);
-    const minLat = bounds?.Ab?.h;
-    const maxLat = bounds?.Ab?.j;
-    const minLng = bounds?.Va?.h;
-    const maxLng = bounds?.Va?.j;
+    var values = [{h:0,j:0},{h:0,j:0}]
+    if (bounds){
+    console.log(values);
+    console.log(values[1].h)
+    console.log("bounds", bounds);
+     values = Object.values(bounds);
+     
+    }
+    const minLat = values[0].h;
+    const maxLat = values[0].j;
+    const minLng = values[1].h;
+    const maxLng = values[1].j;
     console.log('currentType', currentType);
     getAllData(minLat,maxLat,minLng,maxLng,zoom,currentType).then(
       (res) =>{
