@@ -8,6 +8,7 @@ import (
 	"math"
 	"os"
 	"strconv"
+	"time"
 )
 
 //ReadCsvFile return records for a csv file with given filename
@@ -28,10 +29,11 @@ func ReadCsvFile(filePath string) [][]string {
 }
 
 //ParseObjects parse a csv files into objects with Lat Lon time and type
-func ParseObjects(filename string, typeHead string) []nc.Object {
+func ParseObjects(filename string, typeHead string, timeHead string) []nc.Object {
 	LngIndex := -1 //column index for Lng
 	LatIndex := -1 //column index for Lat
 	TypeIndex := -1
+	TimeIndex := -1
 	records := ReadCsvFile(filename)
 	res := []nc.Object{}
 	for i := 0; i < len(records[0]); i++ {
@@ -41,9 +43,11 @@ func ParseObjects(filename string, typeHead string) []nc.Object {
 			LatIndex = i
 		} else if records[0][i] == typeHead {
 			TypeIndex = i
+		} else if records[0][i] == timeHead {
+			TimeIndex = i
 		}
 	}
-	if LngIndex == -1 || LatIndex == -1 || TypeIndex == -1 {
+	if LngIndex == -1 || LatIndex == -1 || TypeIndex == -1 || TimeIndex == -1 {
 		return res
 	}
 	for i := 1; i < len(records); i++ {
@@ -64,14 +68,17 @@ func ParseObjects(filename string, typeHead string) []nc.Object {
 			log.Fatal("Latitude is not a valid float", err)
 		}
 		ty := records[i][TypeIndex]
-		res = append(res, nc.Object{Lng: lng, Lat: lat, Type: ty})
+		timeStr := records[i][TimeIndex]
+		layout := "01/02/2006 3:04:05 PM"
+		t, err := time.Parse(layout, timeStr)
+		res = append(res, nc.Object{Lng: lng, Lat: lat, Type: ty, TimeStamp: t.Unix()})
 	}
 	return res
 }
 
 //CreateNanoCubeFromCsvFile return a nanocube pointer
-func CreateNanoCubeFromCsvFile(filePath string, typeHead string, maxDepth int, limit int, isWithSharing bool) *nc.Nanocube {
-	objects := ParseObjects(filePath, typeHead)
+func CreateNanoCubeFromCsvFile(filePath string, typeHead string, timeHead string, maxDepth int, limit int, isWithSharing bool) *nc.Nanocube {
+	objects := ParseObjects(filePath, typeHead, timeHead)
 	minLng := 1e9
 	maxLng := -1e9
 	minLat := 1e9

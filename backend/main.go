@@ -13,5 +13,6 @@ func main() {
 	r.Use(cors.Default())
 	r.GET("/cubes", controllers.QueryAll)
 	r.GET("/types", controllers.QueryTypes)
+	r.GET("/cubes/time", controllers.QueryWithTypeAndTime)
 	r.Run()
 }

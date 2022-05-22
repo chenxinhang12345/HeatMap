@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useRef, useEffect } from "react";
+import { useState, useMemo, useCallback, useRef, useEffect, SetStateAction } from "react";
 import {
   GoogleMap, Rectangle
 } from "@react-google-maps/api";
@@ -7,6 +7,9 @@ import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import FormControl from '@mui/material/FormControl';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
+import DatePicker from "react-datepicker";
+
+import "react-datepicker/dist/react-datepicker.css";
 
 type LatLngLiteral = google.maps.LatLngLiteral;
 type MapOptions = google.maps.MapOptions;
@@ -17,7 +20,9 @@ export default function Map() {
   const [bounds, setBounds] = useState(null);
   const [data, setData] = useState([]);
   const [types, setTypes] = useState({});
-  const [currentType, setCurrentType] = useState(-1);
+  const [currentType, setCurrentType] = useState('-1');
+  const [startDate, setStartDate] = useState(new Date());
+  const [endDate, setEndDate] = useState(new Date());
   const center = useMemo<LatLngLiteral>(
     () => ({ lat: 41.8337329, lng: -87.7319639 }),
     []
@@ -40,18 +45,27 @@ export default function Map() {
   }
   useEffect (()=>{
     console.log('bounds', bounds);
-    const minLat = bounds?.Ab?.h;
-    const maxLat = bounds?.Ab?.j;
-    const minLng = bounds?.Va?.h;
-    const maxLng = bounds?.Va?.j;
-    console.log('currentType', currentType);
-    getAllData(minLat,maxLat,minLng,maxLng,zoom,currentType).then(
+    var values = [{h:0,j:0},{h:0,j:0}]
+    if (bounds){
+    // console.log(values);
+    // console.log(values[1].h)
+    // console.log("bounds", bounds);
+     values = Object.values(bounds);
+     
+    }
+    const minLat = values[0].h;
+    const maxLat = values[0].j;
+    const minLng = values[1].h;
+    const maxLng = values[1].j;
+    console.log(startDate);
+    // console.log('currentType', currentType);
+    getAllData(minLat,maxLat,minLng,maxLng,zoom,currentType, startDate, endDate).then(
       (res) =>{
         setData(res.data.data);
       }
     )
     
-  },[bounds, currentType])
+  },[bounds, currentType, startDate, endDate])
 
   useEffect (
     ()=>{
@@ -67,31 +81,51 @@ export default function Map() {
     <div className="container">
       <div className="controls">
         <h1>Crime Map</h1>
-        <div>
-        <FormControl variant="filled" sx={{ m: 1, minWidth: 120 }}>
-        <InputLabel id="types">Types</InputLabel>
-        <Select
-          labelId="types"
-          id="types"
-          value={currentType}
-          onChange={onTypeChanged}
-          label="Type"
-        >
-          <MenuItem value={-1}>
-            <em>All</em>
-          </MenuItem>
-          {
-           Object.keys(types).map(
-             (key, i) =>{
-               return(
-               <MenuItem value={types[key]}>{key}</MenuItem>
-               )
-             }
-           )
-          }
-        </Select>
-      </FormControl>
-        </div>
+            <div>
+            <FormControl variant="filled" sx={{ m: 1, minWidth: 120 }}>
+            <InputLabel id="types">Types</InputLabel>
+            <Select
+              labelId="types"
+              id="types"
+              value={currentType}
+              onChange={onTypeChanged}
+              label="Type"
+            >
+              <MenuItem value={-1}>
+                <em>All</em>
+              </MenuItem>
+              {
+              Object.keys(types).map(
+                (key, i) =>{
+                  return(
+                  <MenuItem value={types[key]}>{key}</MenuItem>
+                  )
+                }
+              )
+              }
+            </Select>
+          </FormControl>
+            </div>
+            <div>Start date time</div>
+              <div>
+                  <DatePicker
+                  selected={startDate}
+                  onChange={(date: SetStateAction<Date>) => setStartDate(date)}
+                  timeInputLabel="Time:"
+                  dateFormat="MM/dd/yyyy h:mm aa"
+                  showTimeInput
+                  />
+            </div>
+            <div>End date time</div>
+            <div>
+                  <DatePicker
+                  selected={endDate}
+                  onChange={(date: SetStateAction<Date>) => setEndDate(date)}
+                  timeInputLabel="Time:"
+                  dateFormat="MM/dd/yyyy h:mm aa"
+                  showTimeInput
+                  />
+            </div>
       </div>
       <div className="map">
         <GoogleMap
