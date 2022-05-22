@@ -15,12 +15,12 @@ import (
 
 var Nanocube *nanocube.Nanocube
 
-func InitNanoCube() {
-	filePath := "./parser/crime2020.csv"
-	catColumn := "Primary Type"
-	timeColumn := "Date"
-	level := 20
-	numPoints := 10000
+func InitNanoCube(filePath string, catColumn string, timeColumn string, level int, numPoints int) {
+	// filePath := "./parser/crime2020.csv"
+	// catColumn := "Primary Type"
+	// timeColumn := "Date"
+	// level := 20
+	// numPoints := 10000
 	Nanocube = parser.CreateNanoCubeFromCsvFile(filePath, catColumn, timeColumn, level, numPoints, true)
 }
 
