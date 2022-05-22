@@ -12,16 +12,20 @@ export function convertNanoCubeBoundsToNSEW(nanoCubeBounds: any ){
     }
 }
 
-export async function getAllData ( minLat:number, maxLat:number, minLng:number, maxLng:number, zoom:number , currentType:number) {
+export async function getAllData ( minLat:number, maxLat:number, minLng:number, maxLng:number, zoom:number , currentType:number, startDate: Date, endDate:Date) {
+    const startTs = startDate.getTime() / 1000
+    const endTs = endDate.getTime()/1000
     const res = await axios.get(
-        process.env.NEXT_PUBLIC_SERVER_HOST+"/cubes", 
+        process.env.NEXT_PUBLIC_SERVER_HOST+"/cubes/time", 
         {params: 
             {minLat: minLat, 
                 maxLat:maxLat, 
                 minLng:minLng,
                 maxLng:maxLng, 
                 zoom:zoom,
-                type: currentType
+                type: currentType,
+                startTime: startTs,
+                endTime: endTs
             }});
     return res;
 }
