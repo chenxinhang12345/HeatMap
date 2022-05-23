@@ -3,6 +3,7 @@ package main
 import (
 	"main/server/controllers"
 	"os"
+	"runtime/debug"
 	"strconv"
 
 	"github.com/gin-contrib/cors"
@@ -27,6 +28,7 @@ func main() {
 		println("number of points should be readable int")
 	}
 	controllers.InitNanoCube(filePath, catColumn, timeColumn, int(level), int(numPoints))
+	debug.FreeOSMemory() //grabage collection for non referenced objects
 	r := gin.Default()
 	r.Use(cors.Default())
 	r.GET("/cubes", controllers.QueryAll)

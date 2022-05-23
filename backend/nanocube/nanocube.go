@@ -300,35 +300,41 @@ func (s *SpatNode) UpdateSummaryWithoutSharing(obj Object, maxLevel int, nc *Nan
 	// _, child := s.HasOnlyOneChild()
 	if s.Level < maxLevel {
 		if s.CatRoot == nil {
-			s.CatRoot = &CatNode{Summary: &Summary{Count: 1}, Children: make([]*Summary, len(nc.Types))}
+			s.CatRoot = &CatNode{Summary: &Summary{Count: 1, TimeStampCounts: []TemporalCount{{TimeStamp: obj.TimeStamp, Count: 1}}}, Children: make([]*Summary, len(nc.Types))}
 			index := nc.getIndex(obj.Type) //update categorical node
 			if s.CatRoot.Children[index] != nil {
 				s.CatRoot.Children[index].Count++
+				s.CatRoot.Children[index].TimeStampCounts = AddTemporalCount(TemporalCount{TimeStamp: obj.TimeStamp, Count: 1}, s.CatRoot.Children[index].TimeStampCounts)
 			} else {
-				s.CatRoot.Children[index] = &Summary{Count: 1}
+				s.CatRoot.Children[index] = &Summary{Count: 1, TimeStampCounts: []TemporalCount{{TimeStamp: obj.TimeStamp, Count: 1}}}
+				s.CatRoot.Summary.TimeStampCounts = AddTemporalCount(TemporalCount{TimeStamp: obj.TimeStamp, Count: 1}, s.CatRoot.Summary.TimeStampCounts)
 			}
 		} else {
 			index := nc.getIndex(obj.Type) //update categorical node
 			if s.CatRoot.Children[index] != nil {
 				s.CatRoot.Children[index].Count++
+				s.CatRoot.Children[index].TimeStampCounts = AddTemporalCount(TemporalCount{TimeStamp: obj.TimeStamp, Count: 1}, s.CatRoot.Children[index].TimeStampCounts)
 			} else {
-				s.CatRoot.Children[index] = &Summary{Count: 1}
+				s.CatRoot.Children[index] = &Summary{Count: 1, TimeStampCounts: []TemporalCount{{TimeStamp: obj.TimeStamp, Count: 1}}}
 			}
 			s.CatRoot.Summary.Count++
+			s.CatRoot.Summary.TimeStampCounts = AddTemporalCount(TemporalCount{TimeStamp: obj.TimeStamp, Count: 1}, s.CatRoot.Summary.TimeStampCounts)
 		}
 	} else {
 		if s.CatRoot == nil {
-			s.CatRoot = &CatNode{Summary: &Summary{Count: 1}, Children: make([]*Summary, len(nc.Types))}
+			s.CatRoot = &CatNode{Summary: &Summary{Count: 1, TimeStampCounts: []TemporalCount{{TimeStamp: obj.TimeStamp, Count: 1}}}, Children: make([]*Summary, len(nc.Types))}
 			index := nc.getIndex(obj.Type)
-			s.CatRoot.Children[index] = &Summary{Count: 1}
+			s.CatRoot.Children[index] = &Summary{Count: 1, TimeStampCounts: []TemporalCount{{TimeStamp: obj.TimeStamp, Count: 1}}}
 		} else { //need update
 			index := nc.getIndex(obj.Type)
 			if s.CatRoot.Children[index] != nil {
 				s.CatRoot.Children[index].Count++
+				s.CatRoot.Children[index].TimeStampCounts = AddTemporalCount(TemporalCount{TimeStamp: obj.TimeStamp, Count: 1}, s.CatRoot.Children[index].TimeStampCounts)
 			} else {
-				s.CatRoot.Children[index] = &Summary{Count: 1}
+				s.CatRoot.Children[index] = &Summary{Count: 1, TimeStampCounts: []TemporalCount{{TimeStamp: obj.TimeStamp, Count: 1}}}
 			}
 			s.CatRoot.Summary.Count++
+			s.CatRoot.Summary.TimeStampCounts = AddTemporalCount(TemporalCount{TimeStamp: obj.TimeStamp, Count: 1}, s.CatRoot.Summary.TimeStampCounts)
 		}
 	}
 }

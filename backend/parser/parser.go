@@ -70,7 +70,7 @@ func ParseObjects(filename string, typeHead string, timeHead string) []nc.Object
 		ty := records[i][TypeIndex]
 		timeStr := records[i][TimeIndex]
 		layout := "01/02/2006 3:04:05 PM"
-		t, err := time.Parse(layout, timeStr)
+		t, _ := time.Parse(layout, timeStr)
 		res = append(res, nc.Object{Lng: lng, Lat: lat, Type: ty, TimeStamp: t.Unix()})
 	}
 	return res
