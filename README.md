@@ -79,7 +79,48 @@ At least 2GB memory.
 The system parse the data from a csv file and construct Nanocubes structure in Golang. It also start a backend server for the querys from the frontend. The frontend will query the data from the backend as the user interact with the map. 
 
 ## Codebase Organization
-todo
+    .
+    ├── README.md # readme markdown
+    ├── backend # backend system including nanocubes and server
+    │   ├── go.mod # go mod file for golang dependency install
+    │   ├── go.sum # dependency verification
+    │   ├── main.go # entry of the backend system
+    │   ├── nanocube # module for the nanocube data structure
+    │   │   ├── nanocube.go # nanocubes data structure implementation
+    │   │   └── nanocube_test.go # test of some of the functions
+    │   ├── parser # parser for csv file
+    │   │   ├── crime2020.csv # an example csv file used for demo
+    │   │   ├── parser.go # parser implementation
+    │   │   └── parser_test.go # end to end test for constructing nanocubes from a csv file
+    │   ├── server
+    │   │   ├── controllers # api implementation
+    │   │   │   └── map.go # api methods for querys
+    │   │   └── models # data models
+    │   │       └── cube.go # struct and json definition for rectangles returned to frontend
+    │   └── utils
+    │       └── utils.go # golang utilities
+    └── map
+        ├── README.md
+        ├── components
+        │   └── map.tsx # map component(primary implementation in this file)
+        ├── env.d.ts
+        ├── next-env.d.ts
+        ├── next.config.js
+        ├── package-lock.json
+        ├── package.json
+        ├── pages
+        │   ├── _app.tsx
+        │   └── index.tsx # entry
+        ├── public
+        │   └── favicon.ico
+        ├── styles
+        │   └── globals.css
+        ├── tsconfig.json
+        ├── tsconfig.tsbuildinfo
+        ├── utils
+        │   └── index.tsx # utilities for Typescript
+        └── yarn.lock
+
 
 ## File List
 todo
