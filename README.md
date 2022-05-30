@@ -75,7 +75,8 @@ System version: Ubuntu 20.04
 At least 2GB memory.
 
 ## System Architecture
-todo
+<img width="853" alt="image" src="https://user-images.githubusercontent.com/20518726/171046733-be0e5c36-e684-4c34-ae1b-5ba95a6769dc.png">
+The system parse the data from a csv file and construct Nanocubes structure in Golang. It also start a backend server for the querys from the frontend. The frontend will query the data from the backend as the user interact with the map. 
 
 ## Codebase Organization
 todo
