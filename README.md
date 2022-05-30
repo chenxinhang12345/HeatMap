@@ -125,19 +125,47 @@ The system parse the data from a csv file and construct Nanocubes structure in G
 ## File List
 - [./backend/main.go](https://github.com/chenxinhang12345/HeatMap/blob/main/backend/main.go) Entry of the backend system
 - [./backend/nanocube/nanocube.go](https://github.com/chenxinhang12345/HeatMap/blob/main/backend/nanocube/nanocube.go) Nanocubes data structure implementation
-- [./backend/nanocube/nanocube_test.go](https://github.com/chenxinhang12345/HeatMap/blob/main/backend/nanocube/nanocube_test.go)Tests of some of the functions in Nanocubes implementation
+- [./backend/nanocube/nanocube_test.go](https://github.com/chenxinhang12345/HeatMap/blob/main/backend/nanocube/nanocube_test.go) Tests of some of the functions in Nanocubes implementation
 - [./backend/parser/parser.go](https://github.com/chenxinhang12345/HeatMap/blob/main/backend/parser/parser.go) Parser implementation
 - [./backend/parser/parser_test.go](https://github.com/chenxinhang12345/HeatMap/blob/main/backend/parser/parser_test.go) End to end test for constructing nanocubes from a csv file
-- [./backend/server/controllers/map.go](https://github.com/chenxinhang12345/HeatMap/blob/main/backend/server/controllers/map.go)API methods for querys
+- [./backend/server/controllers/map.go](https://github.com/chenxinhang12345/HeatMap/blob/main/backend/server/controllers/map.go) API methods for querys
 - [./backend/server/models/cube.go](https://github.com/chenxinhang12345/HeatMap/blob/main/backend/server/models/cubes.go) Struct and json definition for rectangles
 - [./backend/server/utils/utils.go](https://github.com/chenxinhang12345/HeatMap/blob/main/backend/server/utils/utils.go) Golang utility functions for the backend system
 - [./map/components/map.tsx](https://github.com/chenxinhang12345/HeatMap/blob/main/map/components/map.tsx) Map component(primary implementation in this file for frontend)
 - [./map/utils/index.tsx](https://github.com/chenxinhang12345/HeatMap/blob/main/map/utils/index.tsx) Utility functions for Typescript
 
 ## Description
-todo
-
+The system parse the data from a csv file and construct Nanocubes structure in Golang using algorithm described in [this paper](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.696.7905&rep=rep1&type=pdf). It also start a backend server using web framework Gin for the querys from the frontend. The frontend will query the data from the backend as the user interact with the map. The api for quering the backend will be as follows:
+http://127.0.0.1:8080/cubes/time?minLat=`minimum latitude`&maxLat=`maximum latitude`.92650702568175&minLng=`minimum longitutde`&maxLng=`maximum longitude`&zoom=`zooming level`&type=`type index`&startTime=`start time in seconds`&endTime=`end time in seconds`
+Example: http://127.0.0.1:8080/cubes/time?minLat=41.7387437848875&maxLat=41.92650702568175&minLng=-87.79987031532278&maxLng=-87.63404542518606&zoom=12&type=-1&startTime=1500000000&endTime=1600000000
+Example data response:
+```json
+{
+  "data": [
+    {
+      "n": 41.923832594570314,
+      "s": 41.920841584890624,
+      "e": -87.79680524285156,
+      "w": -87.79979625253125,
+      "count": 1,
+      "opacity": 0.15049712002086615
+    },
+    {
+      "n": 41.91186855585156,
+      "s": 41.90887754617187,
+      "e": -87.79381423317187,
+      "w": -87.79680524285156,
+      "count": 1,
+      "opacity": 0.15049712002086615
+    }
+]
+}
+```
+Then the frontend will render these recatngles using their opacity values and their location properties as shown in figure previously presented.
 ## Limitations and Improvements
-todo
+There are several limitations and imporvements for this system.
+- For large amount of data, the constructing time is longer than we thought. One possible reason is that the garbage collection time is more than we expected. In order to decrease the number of GCs we could add a flag on summary to indicate wehther it is shared or not to prevent future clean up. This would cost a little extra memory usage but would decrease the number of GCs.
+- In the frontend implementation, it only support single category selection. Users might want to check multiple categories. It would be better if we use checkboxs instead of selection.
+- For initial location of the map, it should be adaptive according to the input csv file. The initial location might be in the center of the Nanocube region instead of hardcoding.
 
 
