@@ -56,7 +56,23 @@ After we open the frontend in http://localhost:3000, we can see a webpage like t
 The selection field on the left with `THEFT` on it is the current crime type or category of spatial points. User can select on this field. The start time and end time of spatial points we wan to show can also be adjusted. Just need to adjust the time on `Start date time` field and `End date time` field, the heatmap will autimatically change by fetching the result from the backend.
 
 ## Requirements and Dependencies
-todo
+### Dependencies
+`go 1.15.2` or above
+Other go dependencies are in go.mod file. Dependencies will be automatically installed after running `go run main.go`.
+`npm 8.1.4` or above
+Other npm dependencies will be automatically installed after running `npm install`.
+### System requirements
+#### MacOS
+```
+System Version: macOS 12.0.1
+Kernel Version: Darwin 21.1.0
+```
+#### Linux
+```
+System version: Ubuntu 20.04
+```
+### Memory
+At least 2GB memory.
 
 ## System Architecture
 todo
