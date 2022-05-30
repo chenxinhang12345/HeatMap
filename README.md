@@ -81,18 +81,18 @@ The system parse the data from a csv file and construct Nanocubes structure in G
 ## Codebase Organization
     .
     ├── README.md # readme markdown
-    ├── backend # backend system including nanocubes and server
+    ├── backend # The whole backend system
     │   ├── go.mod # go mod file for golang dependency install
     │   ├── go.sum # dependency verification
     │   ├── main.go # entry of the backend system
-    │   ├── nanocube # module for the nanocube data structure
+    │   ├── nanocube # module for the Nanocubes in system architecture
     │   │   ├── nanocube.go # nanocubes data structure implementation
     │   │   └── nanocube_test.go # test of some of the functions
-    │   ├── parser # parser for csv file
+    │   ├── parser # module for doing parsing in system architecture
     │   │   ├── crime2020.csv # an example csv file used for demo
     │   │   ├── parser.go # parser implementation
     │   │   └── parser_test.go # end to end test for constructing nanocubes from a csv file
-    │   ├── server
+    │   ├── server # Golang server in system architecture
     │   │   ├── controllers # api implementation
     │   │   │   └── map.go # api methods for querys
     │   │   └── models # data models
@@ -123,7 +123,16 @@ The system parse the data from a csv file and construct Nanocubes structure in G
 
 
 ## File List
-todo
+[./backend/main.go](https://github.com/chenxinhang12345/HeatMap/blob/main/backend/main.go) Entry of the backend system
+[./backend/nanocube/nanocube.go](https://github.com/chenxinhang12345/HeatMap/blob/main/backend/nanocube/nanocube.go) Nanocubes data structure implementation
+[./backend/nanocube/nanocube_test.go](https://github.com/chenxinhang12345/HeatMap/blob/main/backend/nanocube/nanocube_test.go)Tests of some of the functions in Nanocubes implementation
+[./backend/parser/parser.go](https://github.com/chenxinhang12345/HeatMap/blob/main/backend/parser/parser.go) Parser implementation
+[./backend/parser/parser_test.go](https://github.com/chenxinhang12345/HeatMap/blob/main/backend/parser/parser_test.go) End to end test for constructing nanocubes from a csv file
+[./backend/server/controllers/map.go](https://github.com/chenxinhang12345/HeatMap/blob/main/backend/server/controllers/map.go)API methods for querys
+[./backend/server/models/cube.go](https://github.com/chenxinhang12345/HeatMap/blob/main/backend/server/models/cubes.go) Struct and json definition for rectangles
+[./backend/server/utils/utils.go](https://github.com/chenxinhang12345/HeatMap/blob/main/backend/server/utils/utils.go) Golang utility functions for the backend system
+[./map/components/map.tsx](https://github.com/chenxinhang12345/HeatMap/blob/main/map/components/map.tsx) Map component(primary implementation in this file for frontend)
+[./map/utils/index.tsx](https://github.com/chenxinhang12345/HeatMap/blob/main/map/utils/index.tsx) Utility functions for Typescript
 
 ## Description
 todo
