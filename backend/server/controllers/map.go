@@ -15,12 +15,8 @@ import (
 
 var Nanocube *nanocube.Nanocube
 
+//Initialize the nanocube data structure
 func InitNanoCube(filePath string, catColumn string, timeColumn string, level int, numPoints int) {
-	// filePath := "./parser/crime2020.csv"
-	// catColumn := "Primary Type"
-	// timeColumn := "Date"
-	// level := 20
-	// numPoints := 10000
 	Nanocube = parser.CreateNanoCubeFromCsvFile(filePath, catColumn, timeColumn, level, numPoints, true)
 }
 
@@ -34,6 +30,7 @@ func computeOpacity(count int64, max int64, min int64, alpha float64, gamma floa
 	return Y
 }
 
+//Convert heatmap grids to Rectangle structs
 func convertGridsToRectangles(grids []nanocube.HeatMapGrid) []models.Rectangle {
 	res := []models.Rectangle{}
 	var maxCount int64 = 0
@@ -52,6 +49,7 @@ func convertGridsToRectangles(grids []nanocube.HeatMapGrid) []models.Rectangle {
 	return res
 }
 
+//API method for endpoint GET /types
 func QueryAll(c *gin.Context) {
 	minLat := c.Query("minLat")
 	maxLat := c.Query("maxLat")
@@ -107,6 +105,7 @@ func QueryTypes(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": Nanocube.Index})
 }
 
+//API methods for endpoint GET /cubes/time
 func QueryWithTypeAndTime(c *gin.Context) {
 	minLat := c.Query("minLat")
 	maxLat := c.Query("maxLat")

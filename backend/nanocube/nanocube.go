@@ -1,12 +1,11 @@
 package nanocube
 
 import (
-	"encoding/json"
 	"sort"
 )
 
 /*
-Nanocube ...
+Nanocube sturct
 */
 type Nanocube struct {
 	Root     *SpatNode
@@ -17,17 +16,16 @@ type Nanocube struct {
 
 //SpatNode for encoding spatial attribute
 type SpatNode struct {
-	Bounds   Bounds
-	Children []*SpatNode
-	CatRoot  *CatNode
-	Level    int //current level
+	Bounds   Bounds      //spatial information for quadtree node
+	Children []*SpatNode //children
+	CatRoot  *CatNode    //pointer to the categorical node
+	Level    int         //current level
 }
 
 //CatNode for encoding categorical attribute
 type CatNode struct {
 	Children []*Summary
 	Summary  *Summary
-	// Type     string //the category
 }
 
 //HeatMapGrid encode information for each grid of heatmap
@@ -70,6 +68,7 @@ type TemporalCount struct {
 	Count     int64
 }
 
+//Helper function for print out the timestamps
 func PrintTimestampCounts(data []TemporalCount) {
 	for _, tc := range data {
 		print("(", tc.TimeStamp, ",", tc.Count, ") ")
@@ -106,6 +105,7 @@ func AddTemporalCount(tc TemporalCount, data []TemporalCount) []TemporalCount {
 	return data
 }
 
+//Calculate the number of points lied in time interval
 func TemporalCountRangeQuery(data []TemporalCount, startTime int64, endTime int64) int64 {
 	if len(data) == 0 {
 		return 0
@@ -124,15 +124,12 @@ func TemporalCountRangeQuery(data []TemporalCount, startTime int64, endTime int6
 	if startIndex == len(data) {
 		startIndex -= 1
 	}
-	// println(startIndex, endIndex)
-	// println(endTime, data[endIndex].TimeStamp)
 	if endTime < data[endIndex].TimeStamp {
 		endIndex -= 1
 	}
 	if startTime > data[startIndex].TimeStamp {
 		startIndex += 1
 	}
-	// println(startIndex, endIndex)
 	if startIndex > endIndex {
 		return 0
 	}
@@ -149,13 +146,6 @@ func TemporalCountRangeQuery(data []TemporalCount, startTime int64, endTime int6
 	} else {
 		res = data[endIndex].Count
 	}
-	// if res != int64(len(data)) {
-	// println("s, e", startIndex, endIndex)
-	// println(data[endIndex].Count, data[startIndex].Count)
-	// println("res", res, "len", len(data))
-	// PrintTimestampCounts(data)
-	// println("")
-	// }
 	return res
 }
 
@@ -176,7 +166,6 @@ func AssignIndexOnBounds(obj Object, b Bounds) (int, Bounds) {
 	HalfHeight := b.Height / 2
 	MidLng := b.Lng + HalfWidth
 	MidLat := b.Lat - HalfHeight
-	// fmt.Println("func AssignIndexBounds ", obj, " ", b, "MidLng ", MidLng, "MidLat ", MidLat)
 	if obj.Lng <= MidLng && obj.Lat >= MidLat {
 		return 0, Bounds{b.Lng, b.Lat, HalfWidth, HalfHeight}
 	} else if obj.Lng > MidLng && obj.Lat >= MidLat {
@@ -190,6 +179,7 @@ func AssignIndexOnBounds(obj Object, b Bounds) (int, Bounds) {
 	}
 }
 
+//Get corresponding category index by inputting the category string
 func (nc *Nanocube) getIndex(t string) int {
 	return nc.Index[t]
 }
@@ -207,6 +197,7 @@ func (s *SpatNode) HasOnlyOneChild() (bool, *SpatNode) {
 	return (counter == 1), retptr
 }
 
+//Deep copy for TemporalCount
 func Copy(tc TemporalCount) TemporalCount {
 	return TemporalCount{TimeStamp: tc.TimeStamp, Count: tc.Count}
 }
@@ -283,6 +274,7 @@ func (s *SpatNode) UpdateSummary(obj Object, maxLevel int, nc *Nanocube) {
 	}
 }
 
+//Deep copy for CatNode
 func (c *CatNode) Copy() *CatNode {
 	length := len(c.Children)
 	childrenCopy := make([]*Summary, length)
@@ -296,6 +288,7 @@ func (c *CatNode) Copy() *CatNode {
 	return &CatNode{Summary: c.Summary.Copy(), Children: childrenCopy}
 }
 
+//Update the summary without sharing mechanism
 func (s *SpatNode) UpdateSummaryWithoutSharing(obj Object, maxLevel int, nc *Nanocube) {
 	// _, child := s.HasOnlyOneChild()
 	if s.Level < maxLevel {
@@ -447,15 +440,7 @@ func Query(s *SpatNode, b Bounds, level int) []HeatMapGrid {
 	return []HeatMapGrid{{s.Bounds, s.CatRoot.Summary.Count}}
 }
 
-func JsonQuery(s *SpatNode, b Bounds, level int) string {
-	var grids []HeatMapGrid = Query(s, b, level)
-	binStr, err := json.Marshal(grids)
-	if err != nil {
-		return "error with deserialize"
-	}
-	return string(binStr)
-}
-
+//Query the spatial points with specified type
 func QueryType(typeIndex int, s *SpatNode, b Bounds, level int) []HeatMapGrid {
 	s1 := s.Children[0]
 	s2 := s.Children[1]
@@ -501,6 +486,7 @@ func QueryType(typeIndex int, s *SpatNode, b Bounds, level int) []HeatMapGrid {
 	return []HeatMapGrid{{s.Bounds, s.CatRoot.Children[typeIndex].Count}}
 }
 
+//Query the points with start time, end time, spatial bounds, and type
 func QueryTypeTime(startTime int64, endTime int64, typeIndex int, s *SpatNode, b Bounds, level int) []HeatMapGrid {
 	s1 := s.Children[0]
 	s2 := s.Children[1]
@@ -554,13 +540,4 @@ func QueryTypeTime(startTime int64, endTime int64, typeIndex int, s *SpatNode, b
 		return []HeatMapGrid{} //Do not need to render
 	}
 	return []HeatMapGrid{{s.Bounds, resCount}}
-}
-
-func JsonQueryType(typeIndex int, s *SpatNode, b Bounds, level int) string {
-	var grids []HeatMapGrid = QueryType(typeIndex, s, b, level)
-	binStr, err := json.Marshal(grids)
-	if err != nil {
-		return "error with deserialize"
-	}
-	return string(binStr)
 }
