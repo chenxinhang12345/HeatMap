@@ -51,7 +51,9 @@ It must have headers named Latitude,Longitude which represent the lat lng for th
 10/30/2020 03:51:41 PM. A typical example for csv is backend/parser/crime2020.csv
 
 ## Usage
-todo
+After we open the frontend in http://localhost:3000, we can see a webpage like this.
+<img width="1327" alt="image" src="https://user-images.githubusercontent.com/20518726/171042740-0b4394d8-5db6-477c-af4a-c955e9389697.png">
+The selection field on the left with `THEFT` on it is the current crime type or category of spatial points. User can select on this field. The start time and end time of spatial points we wan to show can also be adjusted. Just need to adjust the time on `Start date time` field and `End date time` field, the heatmap will autimatically change by fetching the result from the backend.
 
 ## Requirements and Dependencies
 todo
