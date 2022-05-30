@@ -138,6 +138,7 @@ The system parse the data from a csv file and construct Nanocubes structure in G
 The system parse the data from a csv file and construct Nanocubes structure in Golang using algorithm described in [this paper](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.696.7905&rep=rep1&type=pdf). It also start a backend server using web framework Gin for the querys from the frontend. The frontend will query the data from the backend as the user interact with the map. The api for quering the backend will be as follows:
 http://127.0.0.1:8080/cubes/time?minLat=`minimum latitude`&maxLat=`maximum latitude`.92650702568175&minLng=`minimum longitutde`&maxLng=`maximum longitude`&zoom=`zooming level`&type=`type index`&startTime=`start time in seconds`&endTime=`end time in seconds`
 Example: http://127.0.0.1:8080/cubes/time?minLat=41.7387437848875&maxLat=41.92650702568175&minLng=-87.79987031532278&maxLng=-87.63404542518606&zoom=12&type=-1&startTime=1500000000&endTime=1600000000
+
 Example data response:
 ```json
 {
