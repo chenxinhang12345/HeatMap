@@ -5,6 +5,7 @@ import (
 	"runtime"
 	"runtime/debug"
 	"testing"
+	"time"
 
 	nc "main/nanocube"
 )
@@ -153,17 +154,57 @@ func TestNanoCubeFromBigFile(t *testing.T) {
 }
 
 //Test Nanocube memory usage
-func TestMemUsageWithSharing(t *testing.T) {
-	n := CreateNanoCubeFromCsvFile("crime2020.csv", "PrimaryType", "Date", 30, 10000, true)
+func TestMemUsageAndConsturctionTimeWithSharing(t *testing.T) {
+	start := time.Now()
+	n := CreateNanoCubeFromCsvFile("crime2020.csv", "PrimaryType", "Date", 10, 10000, true)
+	duration := time.Since(start)
 	debug.FreeOSMemory()
 	PrintMemUsage()
-	print(n.Root)
+	println(n.Root)
+	fmt.Println("time cost:", duration)
 }
 
 //Test standard quadtree memory usage
-func TestMemUsageWithoutSharing(t *testing.T) {
-	n := CreateNanoCubeFromCsvFile("crime2020.csv", "PrimaryType", "Date", 30, 10000, false)
+func TestMemUsageAndConstructionTimeWithoutSharing(t *testing.T) {
+	start := time.Now()
+	n := CreateNanoCubeFromCsvFile("crime2020.csv", "PrimaryType", "Date", 10, 10000, false)
+	duration := time.Since(start)
 	debug.FreeOSMemory()
 	PrintMemUsage()
-	print(n.Root)
+	println(n.Root)
+	fmt.Println("time cost:", duration)
+}
+
+//Test query time for Nanocubes
+func TestQueryTimeWithSharing(t *testing.T) {
+	n := CreateNanoCubeFromCsvFile("crime2020.csv", "PrimaryType", "Date", 10, 20000, true)
+	debug.FreeOSMemory()
+	PrintMemUsage()
+	num_cats := len(n.Index)
+	var total_time float64 = 0
+	for index := 0; index < num_cats; index++ {
+		start := time.Now()
+		_ = nc.QueryTypeTime(1593325815, 1653016292, index, n.Root, nc.Bounds{Lng: -87.9345, Lat: 42.022585817, Width: 0.424, Height: 0.424}, 25)
+		duration := time.Since(start)
+		total_time += duration.Seconds()
+	}
+	println(n.Root)
+	fmt.Println("average query time cost:", total_time/float64(num_cats))
+}
+
+//Test query time for standard quadtree memory usage
+func TestQueryTimeWithoutSharing(t *testing.T) {
+	n := CreateNanoCubeFromCsvFile("crime2020.csv", "PrimaryType", "Date", 10, 20000, false)
+	debug.FreeOSMemory()
+	PrintMemUsage()
+	num_cats := len(n.Index)
+	var total_time float64 = 0
+	for index := 0; index < num_cats; index++ {
+		start := time.Now()
+		_ = nc.QueryTypeTime(1593325815, 1653016292, index, n.Root, nc.Bounds{Lng: -87.9345, Lat: 42.022585817, Width: 0.424, Height: 0.424}, 25)
+		duration := time.Since(start)
+		total_time += duration.Seconds()
+	}
+	println(n.Root)
+	fmt.Println("average query time cost:", total_time/float64(num_cats))
 }
